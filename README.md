@@ -23,7 +23,21 @@ following to identify it:
 
 `python -m DMXEnttecPro.utils`
 
-which will give you some detailed information on all COM ports like this.
+which will give you some detailed information on all COM ports like this:
+
+```
+COM4
+  name: None
+  description: USB Serial Port (COM4)
+  hwid: USB VID:PID=0403:6001 SER=EN055555A
+  vid: 1027
+  pid: 24577
+  serial_number: EN055555A
+  location: None
+  manufacturer: FTDI
+  product: None
+  interface: None
+```
 
 Once you know your serial address, setting up a connection to your Enttec DMX
 USB Pro is simple:
@@ -34,15 +48,25 @@ from DMXEnttecPro import Controller
 dmx = Controller('/dev/ttyUSB0')  # Typical of Linux
 ```
 
-Then you can set channel values easily with:
+Then you can set channel values easily (DMX Channels are 1-indexed, and
+`Controller` maintains that convention for you.) with:
 
 ```
 dmx.set_channel(1, 255)  # Sets DMX channel 1 to max 255
 dmx.submit()  # Sends the update to the controller
 ```
 
-DMX Channels are 1-indexed, and `DMXEnttecPro` maintains that convention for
-you.
+In some environments where you may not be assured of the precise string of your
+COM port, I recommend using a uniquely identifying mark like the serial number
+or product ID. Some helpers exist in `DMXEnttecPro.utils`:
+
+```
+from DMXEnttecPro import Controller
+from DMXEnttecPro.utils import get_port_by_serial_number, get_port_by_product_id
+my_port = get_port_by_serial_number('EN055555A')
+my_port = get_port_by_product_id(24577)
+dmx = Controller(my_port)
+```
 
 ## Additional Features
 
