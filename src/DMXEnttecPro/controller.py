@@ -95,6 +95,74 @@ class Controller(object):
                 self.submit()
         return wrapper
 
+    def set_dmx_parameters(self,
+                           output_break_time: int = 9,
+                           mab_time: int = 1,
+                           output_rate: int = 40,
+                           user_defined_bytes=None):
+        """
+        Transmit a message to the Enttec DMX USB Pro to configure some
+        timing aspects of the DMX signal. See the details below:
+
+        :param output_break_time:  The time interval between DMX packets. DMX512
+            standard permits this to be between 88 microseconds and 1 second.
+            The Enttec DMX USB Pro documentation states that it accepts values
+            between 9 and 127, with a base unit of 10.67 microseconds. Why the
+            resulting time interval available is thus 96.03 microseconds to
+            1355.09 microseconds is not known to me. Per documentation of the
+            device, this method accepts integers between 9 and 127 for this
+            parameter.
+        :param mab_time:  The MAB (Mark After Break) is a period of high voltage
+            immediately following the break time (which is low voltage), which
+            signals the receiver that a start code is coming. DMX512 standard
+            permits this to be between 8 microseconds and 1 second. The Enttec
+            DMX USB Pro documentation states that it accepts values between 1
+            and 127, with a base unit of 10.67 microseconds. Why the resulting
+            interval is 10.67 to 1355.09 microseconds is not known to me. Per
+            documentation, this method accepts integers between 1 and 127 for
+            this parameter.
+        :param output_rate:  The output_rate is stated in the Enttec DMX USB Pro
+            documentation to control the rate of packet sending. The exact
+            nature of this behavior is not known to me, and it must be noted
+            that the above parameters have a very direct impact on the the
+            packet send rate possible, and the size of the DMX universe greatly
+            so. Perhaps it implements another wait period outside of the packet
+            timing parameters. Documentation states that it accepts values of 1
+            through 40 signifying a rate in Hz. Special value of 0 will tell it
+            to send signals as fast as possible. This can probably be combined
+            with small DMX universes and dynamic submission to reduce latency on
+            the DMX cable. Accepts integer values from 0 to 40.
+        :param user_defined_bytes: The Enttec DMX USB Pro documentation allows
+            for user-defined data to also be transmitted. This is likely only
+            relevant to special firmware on the device. Accepts bytearrays of
+            length 0 to 512.
+        :return:
+        """
+        if user_defined_bytes is None:
+            user_defined_bytes = bytearray()
+        else:
+            if len(user_defined_bytes) > 512:
+                raise ValueError(
+                    'Length of user_defined_bytes must not be greater than 512')
+        if not (9 <= output_break_time <= 127):
+            raise ValueError('output_break_time must be between 9 and 127')
+        if not (1 <= mab_time <= 127):
+            raise ValueError('mab_time must be between 1 and 127')
+        if not (0 <= output_rate <= 40):
+            raise ValueError('output_rate must be between 0 and 40')
+        msg = (self._signal_start +
+               bytearray([4,  # Set Widget Parameters Request
+                          (len(user_defined_bytes) + 1) & 0xFF,  # user defined length LSB
+                          ((len(user_defined_bytes) + 1) >> 8) & 0xFF,  # user defined length MSB
+                          output_break_time,
+                          mab_time,
+                          output_rate,
+                          ]) +
+               user_defined_bytes +
+               self._signal_end
+               )
+        self._conn.write(msg)
+
     def _get_minimal_submission(self) -> bytearray:
         """
         Computes minimum number of channels to submit to submit all changes

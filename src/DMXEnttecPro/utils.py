@@ -50,7 +50,7 @@ def show_port_details():
     :return:
     """
     for port in slp.comports():
-        print(f'''\
+        print('''\
 {port.device}
   name: {port.name}
   description: {port.description}
@@ -62,7 +62,7 @@ def show_port_details():
   manufacturer: {port.manufacturer}
   product: {port.product}
   interface: {port.interface}
-''')
+'''.format(port=port))
 
 
 if __name__ == '__main__':
