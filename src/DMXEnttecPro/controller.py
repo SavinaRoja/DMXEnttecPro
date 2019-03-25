@@ -9,7 +9,29 @@ from functools import wraps
 
 
 class Controller(object):
+    """
+    Controller maintains a state and interface for interacting with the Enttec
+    DMX USB Pro.
 
+    Key methods include:
+      `set_channel(channel, value)` - Sets channel to value
+      `submit()` - Send state to device
+      `close()` - Close serial connection to device
+
+    Convenience methods:
+      `clear_channels()` - Sets all channels to 0
+      `all_channels_on()` -  Sets all channels to 255
+      `set_all_channels(value)` - Sets all channels to value
+
+    Automatic submission of state changes configurable with `auto_submit`
+    argument. Usage of `submit_after` argument in state-changing methods takes
+    precedence over this default.
+
+    Dynamic submission of state configurable with `dynamic_submit` argument.
+    Dynamic submission sends only as many channels as necessary over serial
+    to fully update the Enttec device. When disabled, submission sends all
+    channels every time. Using this can enable updates to transmit more rapidly.
+    """
     def __init__(self,
                  port_string: str,
                  dmx_size: int = 512,
@@ -17,6 +39,19 @@ class Controller(object):
                  timeout: int = 1,
                  auto_submit: bool = False,
                  dynamic_submit: bool = False):
+        """
+        Instantiate Controller
+
+        Arguments:
+        :param port_string: COM port to use for communication
+        :param dmx_size: Number of channels form 24 to 512 [default: 512]
+        :param baudrate: Baudrate for serial connection [default: 57600]
+        :param timeout: Serial connection timeout [default: 1]
+        :param auto_submit: Enable or disable default automatic submission
+                   [default: False]
+        :param dynamic_submit: Enable or disable dynamic submission
+                   [default: False]
+        """
 
         if not(24 <= dmx_size <= 512):
             raise ValueError('Size of DMX channel frame must be between 24 and 512')
@@ -46,7 +81,8 @@ class Controller(object):
 
         If `submit_after` is supplied as not `None`. Then it takes precedence
         over `self.auto_submit`. Otherwise `self.auto_submit` is used.
-        :return:
+
+        :return: method wrapped in auto submission behavior
         """
         @wraps(f)
         def wrapper(self, *args, submit_after=None, **kwargs):
@@ -59,7 +95,13 @@ class Controller(object):
                 self.submit()
         return wrapper
 
-    def _get_minimal_submission(self):
+    def _get_minimal_submission(self) -> bytearray:
+        """
+        Computes minimum number of channels to submit to submit all changes
+        not yet submitted to the device.
+
+        :return: bytearray subset of self.channels
+        """
         for i, (v0, v1) in enumerate(zip(reversed(self.channels),
                                          reversed(self._last_submitted_channels))):
             if v0 != v1:
@@ -92,36 +134,64 @@ class Controller(object):
 
     @_auto_submit
     def clear_channels(self):
+        """
+        Sets all channels to 0.
+
+        :param submit_after:  Pass True to submit DMX state after completion.
+                              False to not submit, overriding self.auto_submit.
+        :return:
+        """
         self.channels = bytearray(self.dmx_size)
 
     @_auto_submit
     def set_all_channels(self, value: int):
         """
         Set all channel values in the DMX channel bytearray.
-        :param value:
+
+        :param submit_after:  Pass True to submit DMX state after completion.
+            False to not submit, overriding self.auto_submit.
+        :param value: Integer from 1 to 512
         """
         self.channels = bytearray([value]*self.dmx_size)
 
     @_auto_submit
     def all_channels_on(self):
+        """
+        Set all channels to 255.
+
+        :param submit_after:  Pass True to submit DMX state after completion.
+            False to not submit, overriding self.auto_submit.
+        :return:
+        """
         self.channels = bytearray([255]*self.dmx_size)
 
     @_auto_submit
     def set_channel(self, channel: int, value: int):
         """
         Set a channel value in the DMX channel bytearray.
-        :param channel:
-        :param value:
+
+        :param channel: Integer from 1 to 512
+        :param value: Integer from 0 to 255
+        :param submit_after:  Pass True to submit DMX state after completion.
+            False to not submit, overriding self.auto_submit.
+        :return:
         """
         self.channels[channel-1] = value
 
-    def get_channel(self, channel: int):
+    def get_channel(self, channel: int) -> int:
         """
         Returns the value of a channel.
-        :param channel:
-        :return: integer value
+
+        :param channel: Integer from 1 to 512
+        :return: Integer from 0 to 255
         """
         return self.channels[channel-1]
 
     def close(self):
+        """
+        Closes the serial connection nicely. Should be used before creating a
+        new Controller instance on the same COM port.
+
+        :return:
+        """
         self._conn.close()
