@@ -104,34 +104,21 @@ class Controller(object):
         Transmit a message to the Enttec DMX USB Pro to configure some
         timing aspects of the DMX signal. See the details below:
 
-        :param output_break_time:  The time interval between DMX packets. DMX512
-            standard permits this to be between 88 microseconds and 1 second.
-            The Enttec DMX USB Pro documentation states that it accepts values
-            between 9 and 127, with a base unit of 10.67 microseconds. Why the
-            resulting time interval available is thus 96.03 microseconds to
-            1355.09 microseconds is not known to me. Per documentation of the
-            device, this method accepts integers between 9 and 127 for this
-            parameter.
-        :param mab_time:  The MAB (Mark After Break) is a period of high voltage
-            immediately following the break time (which is low voltage), which
-            signals the receiver that a start code is coming. DMX512 standard
-            permits this to be between 8 microseconds and 1 second. The Enttec
-            DMX USB Pro documentation states that it accepts values between 1
-            and 127, with a base unit of 10.67 microseconds. Why the resulting
-            interval is 10.67 to 1355.09 microseconds is not known to me. Per
-            documentation, this method accepts integers between 1 and 127 for
-            this parameter.
-        :param output_rate:  The output_rate is stated in the Enttec DMX USB Pro
-            documentation to control the rate of packet sending. The exact
-            nature of this behavior is not known to me, and it must be noted
-            that the above parameters have a very direct impact on the the
-            packet send rate possible, and the size of the DMX universe greatly
-            so. Perhaps it implements another wait period outside of the packet
-            timing parameters. Documentation states that it accepts values of 1
-            through 40 signifying a rate in Hz. Special value of 0 will tell it
-            to send signals as fast as possible. This can probably be combined
-            with small DMX universes and dynamic submission to reduce latency on
-            the DMX cable. Accepts integer values from 0 to 40.
+        :param output_break_time:  Sets the Break time interval for the DMX
+            packets. Integers between 9 and 127 are accepted per Enttec
+            documentation. A base unit of 10.67 microseconds is used, so the
+            resulting break time will be 10.67 * output_break_time microseconds.
+        :param mab_time:  Sets the MAB (Mark After Break) time interval for the
+            DMX packets. Integers between 1 and 127 are accepted per Enttec
+            documentation. A base unit of 10.67 microseconds is used, so the
+            resulting break time will be 10.67 * output_break_time microseconds.
+        :param output_rate:  Set the rate of DMX Packet sending. Integers
+            between 0 and 40 are accepted. 1 through 40 will set the rate in Hz.
+            0 is a special value, causing the packets to be sent as fast as
+            possible by setting the time between packets to 0. Maximum send
+            rate is a function of packet size, calculable by this function:
+              1000000/((output_break_time * 10.67) + (mab_time * 10.67) +
+                       ((dmx_size + 1) * 44))
         :param user_defined_bytes: The Enttec DMX USB Pro documentation allows
             for user-defined data to also be transmitted. This is likely only
             relevant to special firmware on the device. Accepts bytearrays of
