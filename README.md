@@ -71,8 +71,7 @@ dmx = Controller(my_port)
 ## Additional Features
 
 There are three main additional features that this package offers:
-auto-submission of changes, configurable size of DMX universe, and dynamic
-submission.
+auto-submission of changes and configurable size of DMX universe.
 
 ### Auto-submission
 
@@ -96,19 +95,6 @@ occasions where finer timescales can be achieved in DMX by constraining this.
 ```
 dmx = Controller('/dev/ttyUSB0', dmx_size=256)  # use only 256 channels
 ```
-
-### Dynamic Submission
-
-The `Controller` can determine the fewest number of channels it must send to the
-DMX controller to update and possibly give finer timescales. Supply
-`dynamic_submission=True` to instantiation of `Controller` to enable this.
-
-```
-dmx = Controller('/dev/ttyUSB0', dynamic_submission=True)
-```
-
-If it determines that there are no channels to update, it will omit sending any
-message to the DMX controller.
 
 ## Acknowledgments
 

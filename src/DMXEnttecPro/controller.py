@@ -26,19 +26,14 @@ class Controller(object):
     Automatic submission of state changes configurable with `auto_submit`
     argument. Usage of `submit_after` argument in state-changing methods takes
     precedence over this default.
-
-    Dynamic submission of state configurable with `dynamic_submit` argument.
-    Dynamic submission sends only as many channels as necessary over serial
-    to fully update the Enttec device. When disabled, submission sends all
-    channels every time. Using this can enable updates to transmit more rapidly.
     """
     def __init__(self,
                  port_string: str,
                  dmx_size: int = 512,
                  baudrate: int = 57600,
                  timeout: int = 1,
-                 auto_submit: bool = False,
-                 dynamic_submit: bool = False):
+                 auto_submit: bool = False
+                 ):
         """
         Instantiate Controller
 
@@ -49,8 +44,6 @@ class Controller(object):
         :param timeout: Serial connection timeout [default: 1]
         :param auto_submit: Enable or disable default automatic submission
                    [default: False]
-        :param dynamic_submit: Enable or disable dynamic submission
-                   [default: False]
         """
 
         if not(24 <= dmx_size <= 512):
@@ -59,7 +52,6 @@ class Controller(object):
         self.baudrate = baudrate
         self.timeout = timeout
         self.auto_submit = auto_submit
-        self.dynamic_submit = dynamic_submit
 
         self._conn = serial.Serial(
             port_string,
@@ -150,36 +142,15 @@ class Controller(object):
                )
         self._conn.write(msg)
 
-    def _get_minimal_submission(self) -> bytearray:
-        """
-        Computes minimum number of channels to submit to submit all changes
-        not yet submitted to the device.
-
-        :return: bytearray subset of self.channels
-        """
-        for i, (v0, v1) in enumerate(zip(reversed(self.channels),
-                                         reversed(self._last_submitted_channels))):
-            if v0 != v1:
-                return self.channels[:self.dmx_size-i]
-        return bytearray()
-
     def submit(self):
         """
         Submit the channel state to the DMX Device over serial.
         """
-        if self.dynamic_submit:
-            channels = self._get_minimal_submission()
-            if len(channels) == 0:
-                return
-            elif len(channels) <= 24:
-                channels = self.channels[:24]
-        else:
-            channels = self.channels
 
         msg = (self._signal_start +
                bytearray([6,  # Output Only Send DMX Packet Request
-                          (len(channels) + 1) & 0xFF,  # Data length LSB
-                          ((len(channels) + 1) >> 8) & 0xFF,  # Data length MSB
+                          (len(self.channels) + 1) & 0xFF,  # Data length LSB
+                          ((len(self.channels) + 1) >> 8) & 0xFF,  # Data length MSB
                           0]) +
                self.channels +
                self._signal_end

@@ -12,7 +12,7 @@ def load_readme():
 
 
 setup(name='DMXEnttecPro',
-      version='0.2',
+      version='0.3',
       description='Python control of the Enttec DMX USB Pro',
       author='Paul Barton',
       author_email='pablo.barton@gmail.com',
