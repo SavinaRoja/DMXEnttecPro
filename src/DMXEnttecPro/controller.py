@@ -95,6 +95,61 @@ class Controller(object):
                 self.submit()
         return wrapper
 
+    def set_dmx_parameters(self,
+                           output_break_time: int = 9,
+                           mab_time: int = 1,
+                           output_rate: int = 40,
+                           user_defined_bytes=None):
+        """
+        Transmit a message to the Enttec DMX USB Pro to configure some
+        timing aspects of the DMX signal. See the details below:
+
+        :param output_break_time:  Sets the Break time interval for the DMX
+            packets. Integers between 9 and 127 are accepted per Enttec
+            documentation. A base unit of 10.67 microseconds is used, so the
+            resulting break time will be 10.67 * output_break_time microseconds.
+        :param mab_time:  Sets the MAB (Mark After Break) time interval for the
+            DMX packets. Integers between 1 and 127 are accepted per Enttec
+            documentation. A base unit of 10.67 microseconds is used, so the
+            resulting break time will be 10.67 * output_break_time microseconds.
+        :param output_rate:  Set the rate of DMX Packet sending. Integers
+            between 0 and 40 are accepted. 1 through 40 will set the rate in Hz.
+            0 is a special value, causing the packets to be sent as fast as
+            possible by setting the time between packets to 0. Maximum send
+            rate is a function of packet size, calculable by this function:
+              1000000/((output_break_time * 10.67) + (mab_time * 10.67) +
+                       ((dmx_size + 1) * 44))
+        :param user_defined_bytes: The Enttec DMX USB Pro documentation allows
+            for user-defined data to also be transmitted. This is likely only
+            relevant to special firmware on the device. Accepts bytearrays of
+            length 0 to 512.
+        :return:
+        """
+        if user_defined_bytes is None:
+            user_defined_bytes = bytearray()
+        else:
+            if len(user_defined_bytes) > 512:
+                raise ValueError(
+                    'Length of user_defined_bytes must not be greater than 512')
+        if not (9 <= output_break_time <= 127):
+            raise ValueError('output_break_time must be between 9 and 127')
+        if not (1 <= mab_time <= 127):
+            raise ValueError('mab_time must be between 1 and 127')
+        if not (0 <= output_rate <= 40):
+            raise ValueError('output_rate must be between 0 and 40')
+        msg = (self._signal_start +
+               bytearray([4,  # Set Widget Parameters Request
+                          (len(user_defined_bytes) + 1) & 0xFF,  # user defined length LSB
+                          ((len(user_defined_bytes) + 1) >> 8) & 0xFF,  # user defined length MSB
+                          output_break_time,
+                          mab_time,
+                          output_rate,
+                          ]) +
+               user_defined_bytes +
+               self._signal_end
+               )
+        self._conn.write(msg)
+
     def _get_minimal_submission(self) -> bytearray:
         """
         Computes minimum number of channels to submit to submit all changes

@@ -115,9 +115,7 @@ message to the DMX controller.
 DMXEnttecPro evolved from my re-write of [pysimpledmx](https://github.com/c0z3n/pySimpleDMX)
 for compatibility with Python3.
 
-[pyenttec](https://github.com/generalelectrix/pyenttec) is another good package
-that seems to have also implemented some configuration of the Enttec DMX USB
-Pro that I have not (at present) implemented.
+[pyenttec](https://github.com/generalelectrix/pyenttec) is another good package.
 
 ## Developing
 
