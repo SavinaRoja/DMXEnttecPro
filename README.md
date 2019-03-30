@@ -68,11 +68,6 @@ my_port = get_port_by_product_id(24577)
 dmx = Controller(my_port)
 ```
 
-## Additional Features
-
-There are three main additional features that this package offers:
-auto-submission of changes and configurable size of DMX universe.
-
 ### Auto-submission
 
 You may supply `auto_submit=True` to instantiation of `Controller` to tell it
@@ -95,6 +90,33 @@ occasions where finer timescales can be achieved in DMX by constraining this.
 ```
 dmx = Controller('/dev/ttyUSB0', dmx_size=256)  # use only 256 channels
 ```
+
+### DMX Timing Control
+
+`Contoller.set_dmx_parameters` can be used to adjust the packet timing for DMX.
+The most likely to be used feature is to change the output rate of packets.
+The device supports integer rates from 1 to 40Hz
+
+```
+dmx = Controller('dev/ttyUSB0')
+dmx.set_dmx_parameters(output_rate=1)  # Output at 1Hz
+```
+
+or sending as fast as possible
+where the rate will be directly linked to the size of the DMX channels being
+submitted.
+
+```
+dmx = Controller('dev/ttyUSB0', dmx_size=512)  # 44Hz max rate
+dmx.set_dmx_parameters(output_rate=0)
+```
+
+```
+dmx = Controller('dev/ttyUSB0', dmx_size=32)  # 646Hz max rate
+dmx.set_dmx_parameters(output_rate=0)
+```
+
+The relation to rate and DMX channels is given by `1,000,000 / (140 + (44 * UNIVERSE_SIZE))`
 
 ## Acknowledgments
 
