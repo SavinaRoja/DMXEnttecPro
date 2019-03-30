@@ -129,10 +129,13 @@ class Controller(object):
             raise ValueError('mab_time must be between 1 and 127')
         if not (0 <= output_rate <= 40):
             raise ValueError('output_rate must be between 0 and 40')
+        udb_len = len(user_defined_bytes)
         msg = (self._signal_start +
                bytearray([4,  # Set Widget Parameters Request
-                          (len(user_defined_bytes) + 1) & 0xFF,  # user defined length LSB
-                          ((len(user_defined_bytes) + 1) >> 8) & 0xFF,  # user defined length MSB
+                          (udb_len + 5) & 0xFF,  # LSB of all data
+                          ((udb_len + 5) >> 8) & 0xFF,  # MSB of all data
+                          udb_len & 0xFF,  # LSB of user_defined_bytes
+                          (udb_len >> 8) & 0xFF,  # MSB of user_defined_bytes
                           output_break_time,
                           mab_time,
                           output_rate,
@@ -156,7 +159,6 @@ class Controller(object):
                self._signal_end
                )
         self._conn.write(msg)
-        self._last_submitted_channels = self.channels.copy()
 
     @_auto_submit
     def clear_channels(self):
