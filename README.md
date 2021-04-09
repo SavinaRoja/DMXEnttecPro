@@ -83,7 +83,7 @@ value of the `Controller`.
 
 ### DMX Size Configuration
 
-The size of the DMX universe defaults to 512 channels. There are apparently
+The size of the DMX universe defaults to 512 channels. There are
 occasions where finer timescales can be achieved in DMX by constraining this.
 `dmx_size=<int>` may be supplied to instantiation of `Controller`.
 

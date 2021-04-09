@@ -23,7 +23,7 @@ def get_port_by_serial_number(serial_number: str) -> str:
         if port.serial_number == serial_number:
             return port.device
     # No port could be found for the serial number
-    raise ValueError('No COM device found with serial {}'.format(serial_number))
+    raise ValueError("No COM device found with serial {}".format(serial_number))
 
 
 def get_port_by_product_id(product_id: int) -> str:
@@ -38,7 +38,7 @@ def get_port_by_product_id(product_id: int) -> str:
         if port.pid == product_id:
             return port.device
     # No port could be found for the serial number
-    raise ValueError('No COM device found with product id {}'.format(product_id))
+    raise ValueError("No COM device found with product id {}".format(product_id))
 
 
 def show_port_details():
@@ -50,7 +50,8 @@ def show_port_details():
     :return:
     """
     for port in slp.comports():
-        print('''\
+        print(
+            """\
 {port.device}
   name: {port.name}
   description: {port.description}
@@ -62,8 +63,11 @@ def show_port_details():
   manufacturer: {port.manufacturer}
   product: {port.product}
   interface: {port.interface}
-'''.format(port=port))
+""".format(
+                port=port
+            )
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     show_port_details()

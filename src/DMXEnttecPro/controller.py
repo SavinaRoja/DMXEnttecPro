@@ -27,13 +27,15 @@ class Controller(object):
     argument. Usage of `submit_after` argument in state-changing methods takes
     precedence over this default.
     """
-    def __init__(self,
-                 port_string: str,
-                 dmx_size: int = 512,
-                 baudrate: int = 57600,
-                 timeout: int = 1,
-                 auto_submit: bool = False
-                 ):
+
+    def __init__(
+        self,
+        port_string: str,
+        dmx_size: int = 512,
+        baudrate: int = 57600,
+        timeout: int = 1,
+        auto_submit: bool = False,
+    ):
         """
         Instantiate Controller
 
@@ -46,18 +48,16 @@ class Controller(object):
                    [default: False]
         """
 
-        if not(24 <= dmx_size <= 512):
-            raise ValueError('Size of DMX channel frame must be between 24 and 512')
+        if not (24 <= dmx_size <= 512):
+            raise ValueError("Size of DMX channel frame must be between 24 and 512")
         self.dmx_size = dmx_size
         self.baudrate = baudrate
         self.timeout = timeout
         self.auto_submit = auto_submit
 
         self._conn = serial.Serial(
-            port_string,
-            baudrate=self.baudrate,
-            timeout=self.timeout
-            )
+            port_string, baudrate=self.baudrate, timeout=self.timeout
+        )
 
         self.channels = bytearray(self.dmx_size)
         self._last_submitted_channels = bytearray(self.dmx_size)
@@ -76,6 +76,7 @@ class Controller(object):
 
         :return: method wrapped in auto submission behavior
         """
+
         @wraps(f)
         def wrapper(self, *args, submit_after=None, **kwargs):
             f(self, *args, **kwargs)  # call the wrapped method
@@ -85,13 +86,16 @@ class Controller(object):
 
             elif submit_after:
                 self.submit()
+
         return wrapper
 
-    def set_dmx_parameters(self,
-                           output_break_time: int = 9,
-                           mab_time: int = 1,
-                           output_rate: int = 40,
-                           user_defined_bytes=None):
+    def set_dmx_parameters(
+        self,
+        output_break_time: int = 9,
+        mab_time: int = 1,
+        output_rate: int = 40,
+        user_defined_bytes=None,
+    ):
         """
         Transmit a message to the Enttec DMX USB Pro to configure some
         timing aspects of the DMX signal. See the details below:
@@ -122,27 +126,32 @@ class Controller(object):
         else:
             if len(user_defined_bytes) > 512:
                 raise ValueError(
-                    'Length of user_defined_bytes must not be greater than 512')
+                    "Length of user_defined_bytes must not be greater than 512"
+                )
         if not (9 <= output_break_time <= 127):
-            raise ValueError('output_break_time must be between 9 and 127')
+            raise ValueError("output_break_time must be between 9 and 127")
         if not (1 <= mab_time <= 127):
-            raise ValueError('mab_time must be between 1 and 127')
+            raise ValueError("mab_time must be between 1 and 127")
         if not (0 <= output_rate <= 40):
-            raise ValueError('output_rate must be between 0 and 40')
+            raise ValueError("output_rate must be between 0 and 40")
         udb_len = len(user_defined_bytes)
-        msg = (self._signal_start +
-               bytearray([4,  # Set Widget Parameters Request
-                          (udb_len + 5) & 0xFF,  # LSB of all data
-                          ((udb_len + 5) >> 8) & 0xFF,  # MSB of all data
-                          udb_len & 0xFF,  # LSB of user_defined_bytes
-                          (udb_len >> 8) & 0xFF,  # MSB of user_defined_bytes
-                          output_break_time,
-                          mab_time,
-                          output_rate,
-                          ]) +
-               user_defined_bytes +
-               self._signal_end
-               )
+        msg = (
+            self._signal_start
+            + bytearray(
+                [
+                    4,  # Set Widget Parameters Request
+                    (udb_len + 5) & 0xFF,  # LSB of all data
+                    ((udb_len + 5) >> 8) & 0xFF,  # MSB of all data
+                    udb_len & 0xFF,  # LSB of user_defined_bytes
+                    (udb_len >> 8) & 0xFF,  # MSB of user_defined_bytes
+                    output_break_time,
+                    mab_time,
+                    output_rate,
+                ]
+            )
+            + user_defined_bytes
+            + self._signal_end
+        )
         self._conn.write(msg)
 
     def submit(self):
@@ -150,14 +159,19 @@ class Controller(object):
         Submit the channel state to the DMX Device over serial.
         """
 
-        msg = (self._signal_start +
-               bytearray([6,  # Output Only Send DMX Packet Request
-                          (len(self.channels) + 1) & 0xFF,  # Data length LSB
-                          ((len(self.channels) + 1) >> 8) & 0xFF,  # Data length MSB
-                          0]) +
-               self.channels +
-               self._signal_end
-               )
+        msg = (
+            self._signal_start
+            + bytearray(
+                [
+                    6,  # Output Only Send DMX Packet Request
+                    (len(self.channels) + 1) & 0xFF,  # Data length LSB
+                    ((len(self.channels) + 1) >> 8) & 0xFF,  # Data length MSB
+                    0,
+                ]
+            )
+            + self.channels
+            + self._signal_end
+        )
         self._conn.write(msg)
 
     @_auto_submit
@@ -180,7 +194,7 @@ class Controller(object):
             False to not submit, overriding self.auto_submit.
         :param value: Integer from 1 to 512
         """
-        self.channels = bytearray([value]*self.dmx_size)
+        self.channels = bytearray([value] * self.dmx_size)
 
     @_auto_submit
     def all_channels_on(self):
@@ -191,7 +205,7 @@ class Controller(object):
             False to not submit, overriding self.auto_submit.
         :return:
         """
-        self.channels = bytearray([255]*self.dmx_size)
+        self.channels = bytearray([255] * self.dmx_size)
 
     @_auto_submit
     def set_channel(self, channel: int, value: int):
@@ -204,7 +218,7 @@ class Controller(object):
             False to not submit, overriding self.auto_submit.
         :return:
         """
-        self.channels[channel-1] = value
+        self.channels[channel - 1] = value
 
     def get_channel(self, channel: int) -> int:
         """
@@ -213,7 +227,7 @@ class Controller(object):
         :param channel: Integer from 1 to 512
         :return: Integer from 0 to 255
         """
-        return self.channels[channel-1]
+        return self.channels[channel - 1]
 
     def close(self):
         """
