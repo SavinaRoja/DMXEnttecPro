@@ -41,6 +41,14 @@ def get_port_by_product_id(product_id: int) -> str:
     raise ValueError("No COM device found with product id {}".format(product_id))
 
 
+def least_significant_bit_for_size(size: int) -> int:
+    return size & 0xFF
+
+
+def most_significant_bit_for_size(size: int) -> int:
+    return (size >> 8) & 0xFF
+
+
 def show_port_details():
     """
     Print a listing of all COM ports PySerial can find. Useful for determining

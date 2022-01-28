@@ -3,6 +3,7 @@
 """
 Defines the Controller
 """
+from typing import Optional
 
 import serial
 from functools import wraps
@@ -94,7 +95,7 @@ class Controller(object):
         output_break_time: int = 9,
         mab_time: int = 1,
         output_rate: int = 40,
-        user_defined_bytes=None,
+        user_defined_bytes: Optional[bytearray] = None,
     ):
         """
         Transmit a message to the Enttec DMX USB Pro to configure some
